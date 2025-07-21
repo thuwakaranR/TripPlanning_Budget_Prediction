@@ -16,10 +16,16 @@ __pycache__/
 # Jupyter/Colab notebooks checkpoints (if any)
 .ipynb_checkpoints/
 
-# Model and encoder files
+# Model and encoder files (ignored globally)
 *.pkl
 *.joblib
 *.json
+
+# EXCEPTION: Allow model/encoder files inside the assets folder
+!assets/
+!assets/*.pkl
+!assets/*.joblib
+!assets/*.json
 
 # Dataset files
 *.xlsx
@@ -52,4 +58,3 @@ coverage.xml
 *.cover
 *.py,cover
 .hypothesis/
-
