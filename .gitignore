@@ -27,10 +27,6 @@ __pycache__/
 !assets/*.joblib
 !assets/*.json
 
-# Dataset files
-*.xlsx
-*.csv
-
 # VS Code settings (optional)
 .vscode/
 
