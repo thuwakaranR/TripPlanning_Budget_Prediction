@@ -21,6 +21,10 @@ app.add_middleware(
 
 df = load_dataset()
 
+@app.get("/", summary="Root health check")
+async def root():
+    return {"message": "Trip Budget Prediction API is up and running!"}
+
 @app.post("/predict", summary="Predict trip budget options")
 async def predict_trip(req: TripRequest):
     try:
