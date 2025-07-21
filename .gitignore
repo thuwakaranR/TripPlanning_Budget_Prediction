@@ -1,0 +1,55 @@
+# Python virtual environment
+venv/
+.env
+*.env
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Jupyter/Colab notebooks checkpoints (if any)
+.ipynb_checkpoints/
+
+# Model and encoder files
+*.pkl
+*.joblib
+*.json
+
+# Dataset files
+*.xlsx
+*.csv
+
+# VS Code settings (optional)
+.vscode/
+
+# Logs and cache
+*.log
+.cache/
+*.tmp
+
+# FastAPI auto-generated files (if any future builds)
+*.db
+*.sqlite3
+
+# PyInstaller output
+dist/
+build/
+
+# Compiled C extensions
+*.so
+
+# Test results
+.coverage
+htmlcov/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
