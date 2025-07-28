@@ -41,7 +41,7 @@ async def predict_trip(req: TripRequest):
         data_to_save = req.dict()
         data_to_save["predictions"] = [
             {
-                "plan": plan.get("plan", []),  # plan is already a list of dicts, no need to convert
+                "plan": plan.get("plan", []),  
                 "total_days": plan.get("total_days"),
                 "total_budget": plan.get("total_budget"),
                 "travel_companion": plan.get("travel_companion")
