@@ -99,6 +99,11 @@ desktop.ini
 *.sw?
 
 # ==============================
+# Explicitly un-ignore frontend package.json and package-lock.json files
+!frontend/package.json
+!frontend/package-lock.json
+
+# ==============================
 # Package lock files - keep only one based on your package manager
 package-lock.json
 # yarn.lock
