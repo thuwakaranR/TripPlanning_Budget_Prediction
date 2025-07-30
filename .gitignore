@@ -1,41 +1,24 @@
-# Python virtual environment
+# ==============================
+# Python Virtual Environment and Env Files
 venv/
 .env
 *.env
 
-# OS-generated files
-.DS_Store
-Thumbs.db
-
-# Python cache
+# Python Cache and Build Files
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
 
-# Jupyter/Colab notebooks checkpoints (if any)
+# Jupyter/Colab notebook checkpoints
 .ipynb_checkpoints/
 
-# Model and encoder files (ignored globally)
-*.pkl
-*.joblib
-*.json
-
-# EXCEPTION: Allow model/encoder files inside the assets folder
-!assets/
-!assets/*.pkl
-!assets/*.joblib
-!assets/*.json
-
-# VS Code settings (optional)
-.vscode/
-
-# Logs and cache
+# Python Logs and Cache
 *.log
 .cache/
 *.tmp
 
-# FastAPI auto-generated files (if any future builds)
+# FastAPI/DB files
 *.db
 *.sqlite3
 
@@ -43,10 +26,10 @@ __pycache__/
 dist/
 build/
 
-# Compiled C extensions
+# Compiled C Extensions
 *.so
 
-# Test results
+# Test results and coverage
 .coverage
 htmlcov/
 nosetests.xml
@@ -54,3 +37,69 @@ coverage.xml
 *.cover
 *.py,cover
 .hypothesis/
+
+# ==============================
+# Data & Model files - ignore globally except in assets folder
+*.pkl
+*.joblib
+*.json
+!assets/
+!assets/*.pkl
+!assets/*.joblib
+!assets/*.json
+
+# ==============================
+# Frontend: Node.js / React / Vite
+
+# Dependency directories
+node_modules/
+
+# Build outputs
+dist/
+dist-ssr/
+build/
+.out/
+
+# Vite cache
+.vite/
+
+# Frontend environment variables
+.env
+.env.*
+!.env.example
+
+# Local config files
+*.local
+
+# ==============================
+# Logs (for all)
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ==============================
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==============================
+# Editor and IDE settings
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ==============================
+# Package lock files - keep only one based on your package manager
+package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
