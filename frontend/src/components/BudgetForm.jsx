@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { ImSpinner2 } from "react-icons/im";
+import "react-toastify/dist/ReactToastify.css";
 
 const initialFormState = {
   locations: "",
-  package: "Moderate",
-  total_days: 1,
-  min_rating: "3.0",
-  max_rating: "5.0",
-  travel_companion: "Solo",
+  package: "",
+  total_days: "",
+  min_rating: "1.5",
+  max_rating: "4.0",
+  travel_companion: "",
 };
 
 const sampleFormState = {
@@ -24,34 +25,33 @@ export default function BudgetForm({ onSubmit }) {
   const [formData, setFormData] = useState(initialFormState);
   const [isLoading, setIsLoading] = useState(false);
 
-  const ratingOptions = ["0.0", "1.0", "2.0", "3.0", "4.0", "5.0"];
-
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     if (name === "min_rating") {
-      // Prevent min_rating > current max_rating
       if (parseFloat(value) > parseFloat(formData.max_rating)) {
+        toast.dismiss(); // Dismiss existing toasts
         toast.error("Minimum rating cannot exceed maximum rating.");
         return;
       }
-      setFormData((prev) => ({ ...prev, min_rating: value }));
-    } else if (name === "max_rating") {
-      // Prevent max_rating < current min_rating
+    }
+
+    if (name === "max_rating") {
       if (parseFloat(value) < parseFloat(formData.min_rating)) {
+        toast.dismiss(); // Dismiss existing toasts
         toast.error("Maximum rating cannot be less than minimum rating.");
         return;
       }
-      setFormData((prev) => ({ ...prev, max_rating: value }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
     }
+
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Parse locations
+    toast.dismiss();
+
     const locationsArray = formData.locations
       .split(",")
       .map((loc) => loc.trim())
@@ -62,13 +62,22 @@ export default function BudgetForm({ onSubmit }) {
       return;
     }
 
-    if (formData.total_days < 1) {
+    if (!formData.package) {
+      toast.error("Please select a package type.");
+      return;
+    }
+
+    if (!formData.total_days || Number(formData.total_days) < 1) {
       toast.error("Total days must be at least 1.");
       return;
     }
 
-    const rating_range = `${formData.min_rating}-${formData.max_rating}`;
+    if (!formData.travel_companion) {
+      toast.error("Please select your travel companion.");
+      return;
+    }
 
+    const rating_range = `${formData.min_rating}-${formData.max_rating}`;
     const finalData = {
       ...formData,
       locations: locationsArray,
@@ -81,8 +90,9 @@ export default function BudgetForm({ onSubmit }) {
       await onSubmit(finalData);
     } catch {
       toast.error("Something went wrong.");
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleReset = () => {
@@ -98,19 +108,20 @@ export default function BudgetForm({ onSubmit }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-lg border space-y-5"
+    // className="max-w-4xl mx-auto mt-12 p-10 bg-white rounded-3xl shadow-2xl border border-gray-100 space-y-8"
     >
-      <h2 className="text-2xl font-bold text-center text-gray-800 mb-4">
-        Trip Budget Prediction
+      <h2 className="text-4xl font-bold text-center text-gray-800 mb-4">
+        Plan Your Ideal Trip
       </h2>
+      <p className="text-center text-sm text-gray-500">
+        Fill in your trip preferences to receive optimized budget predictions tailored just for you.
+      </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label
-            htmlFor="locations"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Locations (comma separated):
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Location Input */}
+        <div className="md:col-span-2">
+          <label htmlFor="locations" className="block text-sm font-semibold text-gray-700 mb-1">
+            Locations
           </label>
           <input
             type="text"
@@ -118,38 +129,36 @@ export default function BudgetForm({ onSubmit }) {
             name="locations"
             value={formData.locations}
             onChange={handleChange}
-            placeholder="e.g., LOC_11, LOC_42"
+            placeholder="E.g., LOC_11, LOC_42, LOC_17"
             required
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
           />
+          <p className="text-xs text-gray-400 mt-1">Use location IDs, separated by commas.</p>
         </div>
 
+        {/* Package Type */}
         <div>
-          <label
-            htmlFor="package"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Package Type:
+          <label htmlFor="package" className="block text-sm font-semibold text-gray-700 mb-1">
+            Package Type
           </label>
           <select
             id="package"
             name="package"
             value={formData.package}
             onChange={handleChange}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
           >
+            <option value="">Choose type</option>
             <option value="Basic">Basic</option>
             <option value="Moderate">Moderate</option>
             <option value="Premium">Premium</option>
           </select>
         </div>
 
+        {/* Total Days */}
         <div>
-          <label
-            htmlFor="total_days"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Total Days:
+          <label htmlFor="total_days" className="block text-sm font-semibold text-gray-700 mb-1">
+            Total Days
           </label>
           <input
             type="number"
@@ -159,56 +168,57 @@ export default function BudgetForm({ onSubmit }) {
             value={formData.total_days}
             onChange={handleChange}
             required
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            placeholder="E.g., 5"
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Rating Range:
+        {/* Rating Range */}
+        <div className="md:col-span-2">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Rating Range
           </label>
-          <div className="flex gap-3">
-            <select
+          <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+            <span>Min: {formData.min_rating}</span>
+            <span>Max: {formData.max_rating}</span>
+          </div>
+          <div className="flex gap-4">
+            <input
+              type="range"
               name="min_rating"
+              min="1"
+              max="5"
+              step="0.1"
               value={formData.min_rating}
               onChange={handleChange}
-              className="w-1/2 border border-gray-300 rounded-md px-3 py-2"
-            >
-              {ratingOptions.map((val) => (
-                <option key={val} value={val}>
-                  {val}
-                </option>
-              ))}
-            </select>
-            <select
+              className="w-full accent-blue-500"
+            />
+            <input
+              type="range"
               name="max_rating"
+              min="1"
+              max="5"
+              step="0.1"
               value={formData.max_rating}
               onChange={handleChange}
-              className="w-1/2 border border-gray-300 rounded-md px-3 py-2"
-            >
-              {ratingOptions.map((val) => (
-                <option key={val} value={val}>
-                  {val}
-                </option>
-              ))}
-            </select>
+              className="w-full accent-green-500"
+            />
           </div>
         </div>
 
+        {/* Travel Companion */}
         <div className="md:col-span-2">
-          <label
-            htmlFor="travel_companion"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Travel Companion:
+          <label htmlFor="travel_companion" className="block text-sm font-semibold text-gray-700 mb-1">
+            Travel Companion
           </label>
           <select
             id="travel_companion"
             name="travel_companion"
             value={formData.travel_companion}
             onChange={handleChange}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
           >
+            <option value="">Choose one</option>
             <option value="Solo">Solo</option>
             <option value="Couple">Couple</option>
             <option value="Family">Family</option>
@@ -217,30 +227,58 @@ export default function BudgetForm({ onSubmit }) {
         </div>
       </div>
 
-      <div className="flex gap-4 flex-wrap justify-between mt-6">
+      {/* <div className="md:col-span-2">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Travel Companion
+          </label>
+          <div className="flex flex-wrap justify-between gap-4">
+            {["Solo", "Couple", "Family", "Friends"].map((option) => (
+              <div
+                key={option}
+                onClick={() =>
+                  setFormData((prev) => ({ ...prev, travel_companion: option }))
+                }
+                className={`flex items-center justify-center flex-grow px-6 py-3 rounded-xl cursor-pointer text-sm transition text-center border select-none
+          ${formData.travel_companion === option
+                    ? "bg-blue-100 border-blue-500 text-blue-700 font-medium"
+                    : "bg-white border-gray-300 text-gray-700 hover:border-blue-300"
+                  }`}
+              >
+                {option}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div> */}
+
+
+      {/* Buttons */}
+      <div className="flex flex-wrap justify-between items-center gap-4 mt-6">
+        <div className="flex gap-4">
+          <button
+            type="button"
+            onClick={handleSample}
+            className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+          >
+            Fill Sample
+          </button>
+
+          <button
+            type="button"
+            onClick={handleReset}
+            className="px-6 py-2 bg-gray-100 text-gray-700 border rounded-lg hover:bg-gray-200 transition"
+          >
+            Reset
+          </button>
+        </div>
+
         <button
           type="submit"
           disabled={isLoading}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading && <ImSpinner2 className="animate-spin" />}
           Predict Budget
-        </button>
-
-        <button
-          type="button"
-          onClick={handleReset}
-          className="px-4 py-2 bg-gray-100 text-gray-700 border rounded hover:bg-gray-200"
-        >
-          Reset
-        </button>
-
-        <button
-          type="button"
-          onClick={handleSample}
-          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-        >
-          Fill Sample
         </button>
       </div>
     </form>

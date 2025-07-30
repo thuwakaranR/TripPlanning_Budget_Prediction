@@ -4,6 +4,7 @@ import Predictions from '../components/Predictions';
 import { postPrediction } from '../api/api';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import '../App.css';
 
 export default function Home() {
   const [predictions, setPredictions] = useState(null);
@@ -29,30 +30,35 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-extrabold text-center text-gray-800 mb-10">
+    <div className="w-full min-h-screen bg-gradient-to-br from-blue-50 to-blue-200 flex items-start justify-center py-16 px-6 sm:px-10 lg:px-16">
+      <div className="w-full max-w-5xl">
+        {/* Enhanced Title */}
+        <h1 className="text-center text-6xl sm:text-7xl font-extrabold leading-snug text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-700 to-pink-600 mb-14 drop-shadow-lg zoom-animation">
           Trip Budget Prediction
         </h1>
 
-        <div className="bg-white rounded-xl shadow-md p-6 sm:p-8 mb-8">
+        {/* Form Container */}
+        <div className="bg-white rounded-3xl shadow-2xl p-10 sm:p-14 mb-14">
           <BudgetForm onSubmit={handleSubmit} />
         </div>
 
+        {/* Loading Indicator */}
         {loading && (
-          <p className="text-center text-blue-600 text-lg font-medium animate-pulse">
+          <p className="text-center text-indigo-600 text-xl font-semibold animate-pulse select-none">
             Loading predictions...
           </p>
         )}
 
+        {/* Predictions Output */}
         {predictions && (
-          <div className="bg-white rounded-xl shadow-md p-6 sm:p-8">
+          <div className="bg-white rounded-3xl shadow-2xl p-10 sm:p-14">
             <Predictions data={predictions} />
           </div>
         )}
 
-        <ToastContainer position="top-center" />
+        <ToastContainer position="bottom-right" autoClose={1000} hideProgressBar />
       </div>
     </div>
   );
 }
+
