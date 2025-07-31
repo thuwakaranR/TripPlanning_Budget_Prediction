@@ -29,6 +29,23 @@ export default function Home() {
     }
   };
 
+  function PredictionsWrapper({ data, setPredictions }) {
+    const [showPredictions, setShowPredictions] = useState(true);
+
+    const handleHide = () => {
+      setShowPredictions(false);
+      setPredictions(null); // completely removes the white wrapper div
+    };
+
+    if (!showPredictions) return null;
+
+    return (
+      <div className="bg-white rounded-3xl shadow-2xl p-10 sm:p-14">
+        <Predictions data={data} onCloseAll={handleHide} />
+      </div>
+    );
+  }
+
   return (
     <div className="w-full min-h-screen bg-gradient-to-br from-blue-50 to-blue-200 flex items-start justify-center py-16 px-6 sm:px-10 lg:px-16">
       <div className="w-full max-w-5xl">
@@ -50,10 +67,8 @@ export default function Home() {
         )}
 
         {/* Predictions Output */}
-        {predictions && (
-          <div className="bg-white rounded-3xl shadow-2xl p-10 sm:p-14">
-            <Predictions data={predictions} />
-          </div>
+        {predictions && predictions.length > 0 && (
+          <PredictionsWrapper data={predictions} setPredictions={setPredictions} />
         )}
 
         <ToastContainer position="bottom-right" autoClose={1000} hideProgressBar />
@@ -61,4 +76,3 @@ export default function Home() {
     </div>
   );
 }
-
