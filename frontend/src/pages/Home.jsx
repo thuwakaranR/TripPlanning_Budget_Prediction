@@ -7,7 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import '../App.css';
 
 export default function Home() {
-  // Restore predictions from localStorage on initial render
+  // Restore predictions from localStorage
   const [predictions, setPredictions] = useState(() => {
     const saved = localStorage.getItem("predictions");
     return saved ? JSON.parse(saved) : null;
@@ -15,7 +15,7 @@ export default function Home() {
 
   const [loading, setLoading] = useState(false);
 
-  // Save or remove predictions from localStorage on change
+  // Save or remove predictions from localStorage
   useEffect(() => {
     if (predictions) {
       localStorage.setItem("predictions", JSON.stringify(predictions));
@@ -50,7 +50,7 @@ export default function Home() {
 
     const handleHide = () => {
       setShowPredictions(false);
-      setPredictions(null); // this clears state + localStorage (due to useEffect)
+      setPredictions(null);
     };
 
     if (!showPredictions) return null;
@@ -64,10 +64,8 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-blue-100 text-gray-800">
-      {/* Main Content */}
       <main className="flex-grow flex flex-col items-center px-6 sm:px-10 lg:px-16 pt-20">
         <div className="w-full max-w-6xl">
-          {/* Premium Title */}
           <h1 className="text-center text-5xl sm:text-6xl font-bold leading-tight text-gray-800 tracking-tight mb-14">
             <span className="bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 text-transparent bg-clip-text">
               Smart Trip Budget Prediction

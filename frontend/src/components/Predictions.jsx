@@ -18,7 +18,7 @@ export default function Predictions({ data, onCloseAll }) {
   const goto = (index) => {
     if (index >= -1 && index < data.length) {
       setCurrentIndex(index);
-      setShowThankYou(false); // hide thank you card if re-navigating
+      setShowThankYou(false);
     }
   };
 
@@ -45,13 +45,10 @@ export default function Predictions({ data, onCloseAll }) {
         <ThankYouCard onClose={handleCloseThankYou} onRestart={handleRestart} />
       )}
 
-      {/* Regular UI */}
       {!showThankYou && (
         <>
-          {/* Close Button (not shown on intro) */}
           {!isIntro && (
             <button
-              // onClick={isLastPlan ? handleCloseOnLastPlan : () => setShow(false)}
               onClick={handleCloseOnLastPlan}
               className="absolute top-2 right-2 z-30 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-md"
               aria-label="Close predictions"
@@ -98,7 +95,7 @@ export default function Predictions({ data, onCloseAll }) {
                 <FaChevronLeft size={20} />
               </button>
 
-              {/* Show disabled arrow on last plan instead of hiding it */}
+              {/* Disabled arrow on last plan */}
               <button
                 onClick={() => goto(nextIndex)}
                 disabled={isLastPlan}
@@ -214,15 +211,15 @@ function PlanCard({ option, planNumber, isPeek = false }) {
       </div>
       <div className="bg-gray-50 px-6 py-4 text-sm border-t text-gray-800 font-medium space-y-1">
         <p>
-          👨‍👩‍👧‍👦 Companion:{" "}
+          👨‍👩‍👧‍👦 Travel Companion:{" "}
           <span className="text-blue-600 font-semibold">{option.travel_companion}</span>
         </p>
         <p>
-          🕒 Duration:{" "}
+          🕒 Total Days:{" "}
           <span className="text-blue-600 font-semibold">{option.total_days} days</span>
         </p>
         <p>
-          💰 Budget:{" "}
+          💰 Total Budget:{" "}
           <span className="text-green-700 font-semibold">
             {option.total_budget.toFixed(2)} LKR
           </span>

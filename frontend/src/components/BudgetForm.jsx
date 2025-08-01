@@ -37,7 +37,7 @@ export default function BudgetForm({ onSubmit }) {
 
     if (name === "min_rating") {
       if (parseFloat(value) > parseFloat(formData.max_rating)) {
-        toast.dismiss(); // Dismiss existing toasts
+        toast.dismiss();
         toast.error("Minimum rating cannot exceed maximum rating.");
         return;
       }
@@ -45,7 +45,7 @@ export default function BudgetForm({ onSubmit }) {
 
     if (name === "max_rating") {
       if (parseFloat(value) < parseFloat(formData.min_rating)) {
-        toast.dismiss(); // Dismiss existing toasts
+        toast.dismiss();
         toast.error("Maximum rating cannot be less than minimum rating.");
         return;
       }
@@ -116,7 +116,6 @@ export default function BudgetForm({ onSubmit }) {
   return (
     <form
       onSubmit={handleSubmit}
-    // className="max-w-4xl mx-auto mt-12 p-10 bg-white rounded-3xl shadow-2xl border border-gray-100 space-y-8"
     >
       <h2 className="text-4xl font-bold text-center text-gray-800 mb-4">
         Plan Your Ideal Trip
