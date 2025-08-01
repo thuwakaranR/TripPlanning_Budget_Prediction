@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { ImSpinner2 } from "react-icons/im";
 import "react-toastify/dist/ReactToastify.css";
@@ -22,8 +22,15 @@ const sampleFormState = {
 };
 
 export default function BudgetForm({ onSubmit }) {
-  const [formData, setFormData] = useState(initialFormState);
+  const [formData, setFormData] = useState(() => {
+    const saved = localStorage.getItem("formData");
+    return saved ? JSON.parse(saved) : initialFormState;
+  });
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem("formData", JSON.stringify(formData));
+  }, [formData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -97,6 +104,7 @@ export default function BudgetForm({ onSubmit }) {
 
   const handleReset = () => {
     setFormData(initialFormState);
+    localStorage.removeItem("formData");
     toast.info("Form reset to defaults.");
   };
 
@@ -284,3 +292,4 @@ export default function BudgetForm({ onSubmit }) {
     </form>
   );
 }
+
