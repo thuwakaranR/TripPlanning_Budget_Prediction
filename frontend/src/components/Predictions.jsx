@@ -1,11 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { IoClose } from "react-icons/io5";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 export default function Predictions({ data, onCloseAll }) {
-  const [currentIndex, setCurrentIndex] = useState(-1); // intro screen
+  const [currentIndex, setCurrentIndex] = useState(-1);
   const [show, setShow] = useState(true);
   const [showThankYou, setShowThankYou] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(null);
+  const [confirmedPlanInfo, setConfirmedPlanInfo] = useState(null);
+
+  // Load confirmed plan from localStorage on mount
+  useEffect(() => {
+    const savedPlan = localStorage.getItem("confirmedPlan");
+    if (savedPlan) {
+      setConfirmedPlanInfo(JSON.parse(savedPlan));
+      setShowThankYou(true);
+    }
+  }, []);
 
   if (!data || data.length === 0 || !show) return null;
 
@@ -22,12 +33,10 @@ export default function Predictions({ data, onCloseAll }) {
     }
   };
 
-  const handleCloseOnLastPlan = () => {
-    setShowThankYou(true);
-  };
-
   const handleCloseThankYou = () => {
     setShowThankYou(false);
+    setConfirmedPlanInfo(null);
+    localStorage.removeItem("confirmedPlan");
     setTimeout(() => {
       onCloseAll();
     }, 0);
@@ -36,20 +45,37 @@ export default function Predictions({ data, onCloseAll }) {
   const handleRestart = () => {
     setCurrentIndex(-1);
     setShowThankYou(false);
+    setSelectedIndex(null);
+    setConfirmedPlanInfo(null);
+    localStorage.removeItem("confirmedPlan");
+  };
+
+  const handleConfirm = () => {
+    const planData = {
+      planNumber: selectedIndex + 1,
+      packageID: data[selectedIndex]?.plan[0]?.Package_ID || "",
+    };
+    setConfirmedPlanInfo(planData);
+    localStorage.setItem("confirmedPlan", JSON.stringify(planData));
+    setShowThankYou(true);
   };
 
   return (
-    <div className="relative flex justify-center items-center w-full max-w-6xl mx-auto py-6">
+    <div className="relative flex flex-col items-center w-full max-w-6xl mx-auto py-6">
       {/* Thank You Card */}
       {showThankYou && (
-        <ThankYouCard onClose={handleCloseThankYou} onRestart={handleRestart} />
+        <ThankYouCard
+          onClose={handleCloseThankYou}
+          onRestart={handleRestart}
+          confirmedPlanInfo={confirmedPlanInfo}
+        />
       )}
 
       {!showThankYou && (
         <>
           {!isIntro && (
             <button
-              onClick={handleCloseOnLastPlan}
+              onClick={() => setShowThankYou(true)}
               className="absolute top-2 right-2 z-30 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-md"
               aria-label="Close predictions"
             >
@@ -72,7 +98,12 @@ export default function Predictions({ data, onCloseAll }) {
 
               {/* Active Card */}
               <div className="z-20 w-2/3 transition-all duration-300">
-                <PlanCard option={data[currentIndex]} planNumber={currentIndex + 1} />
+                <PlanCard
+                  option={data[currentIndex]}
+                  planNumber={currentIndex + 1}
+                  isSelected={selectedIndex === currentIndex}
+                  onSelect={() => setSelectedIndex(currentIndex)}
+                />
               </div>
 
               {/* Next Peek */}
@@ -87,26 +118,43 @@ export default function Predictions({ data, onCloseAll }) {
                 onClick={() => goto(prevIndex)}
                 disabled={prevIndex < 0}
                 className={`absolute left-0 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full shadow-md ${prevIndex < 0
-                  ? "bg-gray-300 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700 text-white"
                   }`}
                 aria-label="Previous plan"
               >
                 <FaChevronLeft size={20} />
               </button>
 
-              {/* Disabled arrow on last plan */}
               <button
                 onClick={() => goto(nextIndex)}
                 disabled={isLastPlan}
                 className={`absolute right-0 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full shadow-md ${isLastPlan
-                  ? "bg-gray-300 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700 text-white"
                   }`}
                 aria-label="Next plan"
               >
                 <FaChevronRight size={20} />
               </button>
+
+              {/* Confirm / Cancel Buttons */}
+              {selectedIndex !== null && (
+                <div className="mt-6 flex gap-4 justify-center z-40">
+                  <button
+                    onClick={handleConfirm}
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-full shadow"
+                  >
+                    Confirm Plan
+                  </button>
+                  <button
+                    onClick={() => setSelectedIndex(null)}
+                    className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-full shadow"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
             </>
           )}
         </>
@@ -136,7 +184,7 @@ function IntroCard({ onStart }) {
 }
 
 // Thank You Card
-function ThankYouCard({ onClose, onRestart }) {
+function ThankYouCard({ onClose, onRestart, confirmedPlanInfo }) {
   return (
     <div className="w-full max-w-2xl text-center bg-gradient-to-br from-green-500 to-teal-600 text-white rounded-2xl shadow-2xl px-10 py-12 relative">
       <button
@@ -147,26 +195,45 @@ function ThankYouCard({ onClose, onRestart }) {
         <IoClose size={20} />
       </button>
       <h2 className="text-3xl font-bold mb-4">🎉 Thank You for Exploring!</h2>
-      <p className="text-lg mb-6">
-        We hope you found the perfect trip plan that fits your needs and budget.
-        Feel free to explore again or modify your preferences.
+      <p className="text-lg mb-6 text-center">
+        {confirmedPlanInfo ? (
+          <>
+            You have successfully selected{" "}
+            <strong>Trip Plan {confirmedPlanInfo.planNumber}</strong>.
+          </>
+        ) : (
+          <>
+            We hope you found the perfect trip plan that fits your needs and budget.
+            Feel free to explore again or modify your preferences.
+          </>
+        )}
       </p>
-      <button
-        onClick={onRestart}
-        className="px-6 py-3 bg-white text-green-700 font-semibold rounded-lg shadow hover:bg-gray-100 transition"
-      >
-        Start Over
-      </button>
+      {/* Show Start Over ONLY if NOT confirmed */}
+      {!confirmedPlanInfo && (
+        <button
+          onClick={onRestart}
+          className="px-6 py-3 bg-white text-green-700 font-semibold rounded-lg shadow hover:bg-gray-100 transition"
+        >
+          Start Over
+        </button>
+      )}
     </div>
   );
 }
 
 // Plan Card
-function PlanCard({ option, planNumber, isPeek = false }) {
+function PlanCard({
+  option,
+  planNumber,
+  isPeek = false,
+  isSelected = false,
+  onSelect,
+}) {
   return (
     <div
-      className={`bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden ${isPeek ? "scale-95" : "scale-100"
-        }`}
+      onClick={!isSelected ? onSelect : undefined}
+      className={`cursor-pointer relative transition-all duration-300 border-2 rounded-xl shadow-xl overflow-hidden ${isSelected ? "border-blue-600 bg-blue-50" : "border-gray-200 bg-white"
+        } ${isPeek ? "scale-95 opacity-70" : "scale-100"}`}
     >
       <div className="bg-blue-600 text-white text-center py-2 text-xl font-semibold">
         ✨ Trip Plan {planNumber} ✨
@@ -228,3 +295,5 @@ function PlanCard({ option, planNumber, isPeek = false }) {
     </div>
   );
 }
+
+
