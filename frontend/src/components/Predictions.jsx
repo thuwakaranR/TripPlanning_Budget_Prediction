@@ -8,7 +8,10 @@ export default function Predictions({ data, onCloseAll }) {
   const [showThankYou, setShowThankYou] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [confirmedPlanInfo, setConfirmedPlanInfo] = useState(null);
+  const [loadingConfirm, setLoadingConfirm] = useState(false);
+  const [errorConfirm, setErrorConfirm] = useState(null);
 
+  // Load confirmed plan info from localStorage
   useEffect(() => {
     const savedPlan = localStorage.getItem("confirmedPlan");
     if (savedPlan) {
@@ -24,13 +27,17 @@ export default function Predictions({ data, onCloseAll }) {
   const prevIndex = currentIndex - 1;
   const nextIndex = currentIndex + 1;
 
+  // Navigate to a specific plan or intro
   const goto = (index) => {
     if (index >= -1 && index < data.length) {
       setCurrentIndex(index);
       setShowThankYou(false);
+      setErrorConfirm(null);
+      setSelectedIndex(null);
     }
   };
 
+  // Close thank you message
   const handleCloseThankYou = () => {
     setShowThankYou(false);
     setConfirmedPlanInfo(null);
@@ -40,22 +47,62 @@ export default function Predictions({ data, onCloseAll }) {
     }, 0);
   };
 
+  // Restart entire prediction selection flow
   const handleRestart = () => {
     setCurrentIndex(-1);
     setShowThankYou(false);
     setSelectedIndex(null);
     setConfirmedPlanInfo(null);
     localStorage.removeItem("confirmedPlan");
+    setErrorConfirm(null);
   };
 
-  const handleConfirm = () => {
-    const planData = {
-      planNumber: selectedIndex + 1,
-      packageID: data[selectedIndex]?.plan[0]?.Package_ID || "",
+  // Confirm the selected plan by calling backend API
+  const handleConfirm = async () => {
+    if (selectedIndex === null) return;
+    setLoadingConfirm(true);
+    setErrorConfirm(null);
+
+    const packageIDs = data[selectedIndex].plan.map((pkg) => pkg.Package_ID);
+
+    const payload = {
+      plan_number: selectedIndex,
+      package_ids: packageIDs,
+      confirmed_at: new Date().toISOString(),
+      full_plan: data[selectedIndex],
+      // optionally user_id if you have it
     };
-    setConfirmedPlanInfo(planData);
-    localStorage.setItem("confirmedPlan", JSON.stringify(planData));
-    setShowThankYou(true);
+
+    try {
+      const res = await fetch("http://localhost:8000/confirm", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "Failed to confirm plan");
+      }
+
+      const responseData = await res.json();
+
+      const confirmedData = {
+        planNumber: selectedIndex + 1,
+        packageIDs,
+        confirmationId: responseData.id,
+      };
+
+      setConfirmedPlanInfo(confirmedData);
+      localStorage.setItem("confirmedPlan", JSON.stringify(confirmedData));
+      setShowThankYou(true);
+    } catch (err) {
+      setErrorConfirm(err.message || "Network error");
+    } finally {
+      setLoadingConfirm(false);
+    }
   };
 
   return (
@@ -153,7 +200,7 @@ export default function Predictions({ data, onCloseAll }) {
   );
 }
 
-// Intro Card
+// Intro Card Component
 function IntroCard({ onStart }) {
   return (
     <div className="w-full max-w-2xl text-center bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-2xl shadow-2xl px-10 py-12">
@@ -173,7 +220,7 @@ function IntroCard({ onStart }) {
   );
 }
 
-// Thank You Card
+// Thank You Card Component
 function ThankYouCard({ onClose, onRestart, confirmedPlanInfo }) {
   return (
     <div className="w-full max-w-2xl text-center bg-gradient-to-br from-green-500 to-teal-600 text-white rounded-2xl shadow-2xl px-10 py-12 relative">
@@ -188,8 +235,7 @@ function ThankYouCard({ onClose, onRestart, confirmedPlanInfo }) {
       <p className="text-lg mb-6 text-center">
         {confirmedPlanInfo ? (
           <>
-            You have successfully selected{" "}
-            <strong>Trip Plan {confirmedPlanInfo.planNumber}</strong>.
+            You have successfully selected <strong>Trip Plan {confirmedPlanInfo.planNumber}</strong>.
           </>
         ) : (
           <>
@@ -210,15 +256,12 @@ function ThankYouCard({ onClose, onRestart, confirmedPlanInfo }) {
   );
 }
 
-// Plan Card
-function PlanCard({
-  option,
-  planNumber,
-  isPeek = false,
-  isSelected = false,
-  onSelect,
-}) {
+function PlanCard({ option, planNumber, isPeek = false, isSelected = false, onSelect }) {
   const [expandedIndex, setExpandedIndex] = useState(null);
+
+  useEffect(() => {
+    setExpandedIndex(null);
+  }, [planNumber]);
 
   const toggleExpand = (index, e) => {
     e.stopPropagation();
@@ -246,23 +289,28 @@ function PlanCard({
               <h3 className="text-lg font-semibold text-blue-700">{pkg.Location}</h3>
               <div className="text-sm text-gray-600">
                 {pkg.Days} days •{" "}
-                <span className="text-yellow-600 font-semibold">
-                  {pkg.Avg_Rating}⭐
-                </span>{" "}
-                •{" "}
-                <span className="text-green-700 font-bold">
-                  {pkg.Predicted_Budget} LKR
-                </span>
+                <span className="text-yellow-600 font-semibold">{pkg.Avg_Rating}⭐</span> •{" "}
+                <span className="text-green-700 font-bold">{pkg.Predicted_Budget} LKR</span>
               </div>
             </div>
 
             {expandedIndex === idx && (
               <div className="mt-3 text-sm text-gray-700 space-y-1">
-                <p><strong>Package Type:</strong> {pkg.Package_Type}</p>
-                <p><strong>Package ID:</strong> {pkg.Package_ID}</p>
-                <p><strong>Accommodation:</strong> {pkg.Accommodation}</p>
-                <p><strong>Food & Transport:</strong> {pkg["Food & Transport"]}</p>
-                <p><strong>Activities:</strong></p>
+                <p>
+                  <strong>Package Type:</strong> {pkg.Package_Type}
+                </p>
+                <p>
+                  <strong>Package ID:</strong> {pkg.Package_ID}
+                </p>
+                <p>
+                  <strong>Accommodation:</strong> {pkg.Accommodation}
+                </p>
+                <p>
+                  <strong>Food & Transport:</strong> {pkg["Food & Transport"]}
+                </p>
+                <p>
+                  <strong>Activities:</strong>
+                </p>
                 <ul className="list-disc list-inside ml-4">
                   {pkg.Activities.map((activity, i) => (
                     <li key={i}>{activity}</li>
@@ -283,9 +331,7 @@ function PlanCard({
         ))}
       </div>
 
-      <div
-        className="bg-gray-50 px-6 py-4 text-sm border-t text-gray-800 font-medium space-y-1"
-      >
+      <div className="bg-gray-50 px-6 py-4 text-sm border-t text-gray-800 font-medium space-y-1">
         <p>
           👨‍👩‍👧‍👦 Travel Companion:{" "}
           <span className="text-blue-600 font-semibold">{option.travel_companion}</span>
@@ -296,11 +342,13 @@ function PlanCard({
         </p>
         <p>
           💰 Total Budget:{" "}
-          <span className="text-green-700 font-semibold">
-            {option.total_budget.toFixed(2)} LKR
-          </span>
+          <span className="text-green-700 font-semibold">{option.total_budget.toFixed(2)} LKR</span>
         </p>
       </div>
     </div>
   );
 }
+
+
+
+

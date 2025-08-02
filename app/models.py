@@ -1,28 +1,29 @@
 from pydantic import BaseModel, Field, validator
-from typing import List
+from typing import List, Optional, Any
+from datetime import datetime
 
 class TripRequest(BaseModel):
     locations: List[str] = Field(
-        ..., 
+        ...,
         min_items=1,
         description="List of location codes, e.g. ['LOC_11', 'LOC_42']"
     )
     package: str = Field(
-        ..., 
+        ...,
         description="Package type, e.g. 'Moderate'"
     )
     total_days: int = Field(
-        ..., 
-        ge=1, 
+        ...,
+        ge=1,
         description="Total number of travel days (must be >= 1)"
     )
     rating_range: str = Field(
-        ..., 
-        pattern=r"^\d+(\.\d+)?-\d+(\.\d+)?$", 
+        ...,
+        pattern=r"^\d+(\.\d+)?-\d+(\.\d+)?$",
         description="Rating range as 'min-max', e.g. '3.0-5.0'"
     )
     travel_companion: str = Field(
-        ..., 
+        ...,
         description="Travel companion type, e.g. 'Family', 'Solo', 'Couple', 'Friends'"
     )
 
@@ -42,5 +43,29 @@ class TripRequest(BaseModel):
         except Exception:
             raise ValueError("rating_range must be in format 'min-max' with values between 0.0 and 5.0")
         return v
+class ConfirmPlanRequest(BaseModel):
+    user_id: Optional[str] = Field(
+        None,
+        description="Optional user identifier (if available)"
+    )
+    plan_number: int = Field(
+        ...,
+        ge=0,
+        description="Index of the selected plan (0-based)"
+    )
+    package_ids: List[str] = Field(
+        ...,
+        min_items=1,
+        description="List of Package_IDs confirmed for the trip"
+    )
+    confirmed_at: datetime = Field(
+        ...,
+        description="ISO formatted datetime when the plan was confirmed"
+    )
+    full_plan: Optional[Any] = Field(
+        None,
+        description="Full plan data for reference (optional)"
+    )
+
 
 
