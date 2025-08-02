@@ -9,7 +9,6 @@ export default function Predictions({ data, onCloseAll }) {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [confirmedPlanInfo, setConfirmedPlanInfo] = useState(null);
 
-  // Load confirmed plan from localStorage on mount
   useEffect(() => {
     const savedPlan = localStorage.getItem("confirmedPlan");
     if (savedPlan) {
@@ -22,7 +21,6 @@ export default function Predictions({ data, onCloseAll }) {
 
   const isIntro = currentIndex === -1;
   const isLastPlan = currentIndex === data.length - 1;
-
   const prevIndex = currentIndex - 1;
   const nextIndex = currentIndex + 1;
 
@@ -62,7 +60,6 @@ export default function Predictions({ data, onCloseAll }) {
 
   return (
     <div className="relative flex flex-col items-center w-full max-w-6xl mx-auto py-6">
-      {/* Thank You Card */}
       {showThankYou && (
         <ThankYouCard
           onClose={handleCloseThankYou}
@@ -83,20 +80,16 @@ export default function Predictions({ data, onCloseAll }) {
             </button>
           )}
 
-          {/* Intro Card */}
           {isIntro && <IntroCard onStart={() => goto(0)} />}
 
-          {/* Trip Plan Cards */}
           {!isIntro && (
             <>
-              {/* Previous Peek */}
               {prevIndex >= 0 && (
                 <div className="absolute left-8 transform -translate-x-full scale-90 opacity-50 w-1/3 transition-all duration-300">
                   <PlanCard option={data[prevIndex]} planNumber={prevIndex + 1} isPeek />
                 </div>
               )}
 
-              {/* Active Card */}
               <div className="z-20 w-2/3 transition-all duration-300">
                 <PlanCard
                   option={data[currentIndex]}
@@ -106,20 +99,18 @@ export default function Predictions({ data, onCloseAll }) {
                 />
               </div>
 
-              {/* Next Peek */}
               {nextIndex < data.length && (
                 <div className="absolute right-8 transform translate-x-full scale-90 opacity-50 w-1/3 transition-all duration-300">
                   <PlanCard option={data[nextIndex]} planNumber={nextIndex + 1} isPeek />
                 </div>
               )}
 
-              {/* Arrows */}
               <button
                 onClick={() => goto(prevIndex)}
                 disabled={prevIndex < 0}
                 className={`absolute left-0 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full shadow-md ${prevIndex < 0
-                    ? "bg-gray-300 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                  ? "bg-gray-300 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
                   }`}
                 aria-label="Previous plan"
               >
@@ -130,15 +121,14 @@ export default function Predictions({ data, onCloseAll }) {
                 onClick={() => goto(nextIndex)}
                 disabled={isLastPlan}
                 className={`absolute right-0 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full shadow-md ${isLastPlan
-                    ? "bg-gray-300 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                  ? "bg-gray-300 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
                   }`}
                 aria-label="Next plan"
               >
                 <FaChevronRight size={20} />
               </button>
 
-              {/* Confirm / Cancel Buttons */}
               {selectedIndex !== null && (
                 <div className="mt-6 flex gap-4 justify-center z-40">
                   <button
@@ -208,7 +198,6 @@ function ThankYouCard({ onClose, onRestart, confirmedPlanInfo }) {
           </>
         )}
       </p>
-      {/* Show Start Over ONLY if NOT confirmed */}
       {!confirmedPlanInfo && (
         <button
           onClick={onRestart}
@@ -229,6 +218,13 @@ function PlanCard({
   isSelected = false,
   onSelect,
 }) {
+  const [expandedIndex, setExpandedIndex] = useState(null);
+
+  const toggleExpand = (index, e) => {
+    e.stopPropagation();
+    setExpandedIndex(expandedIndex === index ? null : index);
+  };
+
   return (
     <div
       onClick={!isSelected ? onSelect : undefined}
@@ -238,45 +234,58 @@ function PlanCard({
       <div className="bg-blue-600 text-white text-center py-2 text-xl font-semibold">
         ✨ Trip Plan {planNumber} ✨
       </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-sm table-auto">
-          <thead className="bg-gray-100 font-semibold">
-            <tr>
-              <th className="px-3 py-2">Location</th>
-              <th className="px-3 py-2">Package ID</th>
-              <th className="px-3 py-2">Type</th>
-              <th className="px-3 py-2">Days</th>
-              <th className="px-3 py-2">Accommodation</th>
-              <th className="px-3 py-2">Food & Transport</th>
-              <th className="px-3 py-2">Rating</th>
-              <th className="px-3 py-2">Activities</th>
-              <th className="px-3 py-2">Budget</th>
-            </tr>
-          </thead>
-          <tbody>
-            {option.plan.map((pkg, idx) => (
-              <tr key={idx} className="border-t hover:bg-gray-50">
-                <td className="px-3 py-2">{pkg.Location}</td>
-                <td className="px-3 py-2">{pkg.Package_ID}</td>
-                <td className="px-3 py-2">{pkg.Package_Type}</td>
-                <td className="px-3 py-2">{pkg.Days}</td>
-                <td className="px-3 py-2">{pkg.Accommodation}</td>
-                <td className="px-3 py-2">{pkg["Food & Transport"]}</td>
-                <td className="px-3 py-2">{pkg.Avg_Rating}</td>
-                <td className="px-3 py-2">
-                  <ul className="list-disc ml-4">
-                    {pkg.Activities.map((a, i) => (
-                      <li key={i}>{a}</li>
-                    ))}
-                  </ul>
-                </td>
-                <td className="px-3 py-2 font-semibold">{pkg.Predicted_Budget}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+
+      <div className="p-4 space-y-4">
+        {option.plan.map((pkg, idx) => (
+          <div
+            key={idx}
+            className="bg-white border rounded-lg shadow-sm p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
+              <h3 className="text-lg font-semibold text-blue-700">{pkg.Location}</h3>
+              <div className="text-sm text-gray-600">
+                {pkg.Days} days •{" "}
+                <span className="text-yellow-600 font-semibold">
+                  {pkg.Avg_Rating}⭐
+                </span>{" "}
+                •{" "}
+                <span className="text-green-700 font-bold">
+                  {pkg.Predicted_Budget} LKR
+                </span>
+              </div>
+            </div>
+
+            {expandedIndex === idx && (
+              <div className="mt-3 text-sm text-gray-700 space-y-1">
+                <p><strong>Package Type:</strong> {pkg.Package_Type}</p>
+                <p><strong>Package ID:</strong> {pkg.Package_ID}</p>
+                <p><strong>Accommodation:</strong> {pkg.Accommodation}</p>
+                <p><strong>Food & Transport:</strong> {pkg["Food & Transport"]}</p>
+                <p><strong>Activities:</strong></p>
+                <ul className="list-disc list-inside ml-4">
+                  {pkg.Activities.map((activity, i) => (
+                    <li key={i}>{activity}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="text-right mt-2">
+              <button
+                onClick={(e) => toggleExpand(idx, e)}
+                className="text-sm text-blue-600 font-medium hover:underline"
+              >
+                {expandedIndex === idx ? "View Less" : "View More"}
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
-      <div className="bg-gray-50 px-6 py-4 text-sm border-t text-gray-800 font-medium space-y-1">
+
+      <div
+        className="bg-gray-50 px-6 py-4 text-sm border-t text-gray-800 font-medium space-y-1"
+      >
         <p>
           👨‍👩‍👧‍👦 Travel Companion:{" "}
           <span className="text-blue-600 font-semibold">{option.travel_companion}</span>
@@ -295,5 +304,3 @@ function PlanCard({
     </div>
   );
 }
-
-
