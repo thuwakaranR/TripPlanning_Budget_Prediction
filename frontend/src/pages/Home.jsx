@@ -1,21 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import BudgetForm from '../components/BudgetForm';
 import Predictions from '../components/Predictions';
+import ChatBot from '../components/ChatBot';
 import { postPrediction } from '../api/api';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../App.css';
 
 export default function Home() {
-  // Restore predictions from localStorage
   const [predictions, setPredictions] = useState(() => {
     const saved = localStorage.getItem("predictions");
     return saved ? JSON.parse(saved) : null;
   });
 
   const [loading, setLoading] = useState(false);
+  const [chatVisible, setChatVisible] = useState(false);
 
-  // Save or remove predictions from localStorage
+  const chatManuallyClosed = localStorage.getItem("hideChatBot") === "true";
+
   useEffect(() => {
     if (predictions) {
       localStorage.setItem("predictions", JSON.stringify(predictions));
@@ -24,10 +26,11 @@ export default function Home() {
     }
   }, [predictions]);
 
-  // Submit form and get predictions from backend
   const handleSubmit = async (formData) => {
     setLoading(true);
     setPredictions(null);
+    setChatVisible(false);
+
     try {
       const response = await postPrediction(formData);
       if (response.data.error) {
@@ -44,26 +47,33 @@ export default function Home() {
     }
   };
 
-  // Show predictions in a card, allow hiding
-  function PredictionsWrapper({ data }) {
+  const handleCloseChatBot = () => {
+    setChatVisible(false);
+    localStorage.setItem("hideChatBot", "true");
+  };
+
+  const PredictionsWrapper = ({ data }) => {
     const [showPredictions, setShowPredictions] = useState(true);
 
-    const handleHide = () => {
+    const handleClosePredictions = () => {
       setShowPredictions(false);
       setPredictions(null);
+      if (!chatManuallyClosed) {
+        setChatVisible(true);
+      }
     };
 
     if (!showPredictions) return null;
 
     return (
       <div className="bg-white rounded-3xl shadow-xl p-10 sm:p-14 animate-fadeIn">
-        <Predictions data={data} onCloseAll={handleHide} />
+        <Predictions data={data} onCloseAll={handleClosePredictions} />
       </div>
     );
-  }
+  };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-blue-100 text-gray-800">
+    <div className="relative flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-blue-100 text-gray-800">
       <main className="flex-grow flex flex-col items-center px-6 sm:px-10 lg:px-16 pt-20">
         <div className="w-full max-w-6xl">
           <h1 className="text-center text-5xl sm:text-6xl font-bold leading-tight text-gray-800 tracking-tight mb-14">
@@ -72,19 +82,16 @@ export default function Home() {
             </span>
           </h1>
 
-          {/* Budget Form Section */}
           <div className="bg-white rounded-3xl shadow-2xl p-10 sm:p-14 mb-14 border border-gray-100">
             <BudgetForm onSubmit={handleSubmit} />
           </div>
 
-          {/* Loading Text */}
           {loading && (
             <p className="text-center text-indigo-600 text-lg font-medium animate-pulse mb-8">
               Generating travel cost predictions...
             </p>
           )}
 
-          {/* Show Predictions if available */}
           {predictions && predictions.length > 0 && (
             <PredictionsWrapper data={predictions} />
           )}
@@ -93,7 +100,14 @@ export default function Home() {
         <ToastContainer position="bottom-right" autoClose={1000} hideProgressBar />
       </main>
 
-      {/* Premium Footer */}
+      {/* Global floating chatbot */}
+      {chatVisible && (
+        <ChatBot
+          showChatBot={chatVisible}
+          onClose={handleCloseChatBot}
+        />
+      )}
+
       <footer className="bg-white border-t border-gray-200 mt-12 text-sm sm:text-base">
         <div className="max-w-6xl mx-auto px-6 py-8 sm:py-10 grid grid-cols-1 sm:grid-cols-2 gap-6 items-center text-gray-600">
           <div>
@@ -103,7 +117,6 @@ export default function Home() {
               Travel wisely, explore freely.
             </p>
           </div>
-
           <div className="flex flex-col sm:items-end space-y-2">
             <p>Crafted with precision for global travelers</p>
             <p>&copy; {new Date().getFullYear()} TravelMate. All rights reserved.</p>
@@ -118,5 +131,7 @@ export default function Home() {
     </div>
   );
 }
+
+
 
 
