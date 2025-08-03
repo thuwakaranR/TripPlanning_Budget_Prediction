@@ -10,7 +10,7 @@ const ChatBot = ({ showChatBot, onClose }) => {
 
     const chatbotRef = useRef(null);
 
-    // Load messages based on confirmed plan
+    // Load messages based on confirmed plan or state
     useEffect(() => {
         if (!showChatBot) return;
 
@@ -57,50 +57,33 @@ const ChatBot = ({ showChatBot, onClose }) => {
         localStorage.removeItem("chatTriggeredWithoutConfirm");
     }, [showChatBot]);
 
-    const handleSend = () => {
+    // API call to backend chatbot
+    const handleSend = async () => {
         if (!input.trim()) return;
 
         const userMessage = { sender: "user", text: input };
         setMessages((prev) => [...prev, userMessage]);
 
-        const botResponse = generateBotResponse(input);
-        setTimeout(() => {
-            setMessages((prev) => [...prev, { sender: "bot", text: botResponse }]);
-        }, 500);
+        try {
+            const response = await fetch("http://localhost:8000/chatbot", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: input }),
+            });
+
+            if (!response.ok) throw new Error("Chatbot error");
+
+            const data = await response.json();
+            setMessages((prev) => [...prev, { sender: "bot", text: data.reply }]);
+        } catch (error) {
+            setMessages((prev) => [
+                ...prev,
+                { sender: "bot", text: "Sorry, something went wrong." },
+            ]);
+            console.error("Chatbot API error:", error);
+        }
 
         setInput("");
-    };
-
-    const generateBotResponse = (text) => {
-        const lower = text.toLowerCase();
-        const pkgIdMatch = text.match(/\d{2,3}\.\w{1,2}\.\d{1,3}/);
-
-        if (
-            lower.includes("triplane 1") ||
-            lower.includes("triplane 2") ||
-            lower.includes("custom package")
-        ) {
-            return "Sure! A great combo would be 3 from Triplane 1 and 2 from Triplane 2. Want me to suggest one?";
-        }
-
-        if (pkgIdMatch) {
-            const matchedId = pkgIdMatch[0];
-            if (confirmedPlan?.packageIDs?.includes(matchedId)) {
-                return `Yes! Package ID ${matchedId} is part of your confirmed plan.`;
-            } else {
-                return `Package ID ${matchedId} wasn't selected. Want to replace or add it?`;
-            }
-        }
-
-        if (lower.includes("thank you") || lower.includes("thanks")) {
-            return "You're welcome! 😊 Enjoy your trip and let me know if you need anything else.";
-        }
-
-        if (lower.includes("not satisfied") || lower.includes("change")) {
-            return "I'm sorry to hear that. Want me to help you create a better package or change your selections?";
-        }
-
-        return "I'm here to help with trip plans, Triplane options, or package IDs. Ask me anything!";
     };
 
     if (!showChatBot) return null;
@@ -182,4 +165,5 @@ const ChatBot = ({ showChatBot, onClose }) => {
 };
 
 export default ChatBot;
+
 
