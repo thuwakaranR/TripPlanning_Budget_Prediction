@@ -223,7 +223,7 @@ export default function ConfirmedPlans() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-6 relative min-h-screen">
+    <div className="max-w-full mx-auto p-6 relative min-h-screen">
       <button
         onClick={() => navigate(-1)}
         className="absolute top-4 left-4 text-gray-600 hover:text-indigo-600 text-2xl"
