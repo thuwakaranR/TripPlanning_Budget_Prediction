@@ -81,7 +81,6 @@ export default function ConfirmedPlans() {
       y += 10;
     }
 
-    // Title
     addPageNumber();
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
@@ -92,7 +91,6 @@ export default function ConfirmedPlans() {
 
     drawSeparator();
 
-    // Confirmed At
     doc.setFontSize(12);
     const confirmedLabelWidth = drawHeaderLabel("Confirmed At:", y);
     doc.setFont("helvetica", "normal");
@@ -100,13 +98,10 @@ export default function ConfirmedPlans() {
     doc.text(new Date(plan.confirmed_at).toLocaleString(), margin + confirmedLabelWidth + 10, y + 3);
     y += 20;
 
-    // Package IDs
     const packageLabelWidth = drawHeaderLabel("Package IDs:", y);
-    doc.setFont("helvetica", "normal");
     doc.text(plan.package_ids.join(", "), margin + packageLabelWidth + 10, y + 3);
     y += 20;
 
-    // Full Plan Header
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.setTextColor(50);
@@ -117,7 +112,7 @@ export default function ConfirmedPlans() {
     doc.setTextColor(0);
     doc.setFont("helvetica", "normal");
 
-    plan.full_plan.plan.forEach((item) => {
+    plan.full_plan.plan.forEach((item, idx) => {
       if (y + 80 > pageHeight - 30) addNewPage();
 
       const boxHeight = 65 + item.Activities.length * 6;
@@ -126,10 +121,12 @@ export default function ConfirmedPlans() {
       doc.setDrawColor(220);
       doc.roundedRect(margin - 5, y - 10, pageWidth - 2 * margin + 10, boxHeight, 4, 4, 'S');
 
+      const locationLabel = `Sub Plan ${String(idx + 1).padStart(2, "0")}`;
+
       doc.setFont("helvetica", "bold");
-      doc.text(`Location:`, margin, y);
+      doc.text("Plan:", margin, y);
       doc.setFont("helvetica", "normal");
-      doc.text(item.Location, margin + 25, y);
+      doc.text(locationLabel, margin + 25, y);
 
       doc.setFont("helvetica", "bold");
       doc.text("Package:", pageWidth - margin - 100, y);
@@ -167,7 +164,6 @@ export default function ConfirmedPlans() {
       y += 15;
     });
 
-    // Summary
     if (y + 60 > pageHeight - 30) addNewPage();
 
     doc.setFontSize(14);
@@ -240,7 +236,6 @@ export default function ConfirmedPlans() {
         <p className="text-center mt-10">No confirmed plans found.</p>
       )}
 
-      {/* Plans grid */}
       {!loading && plans.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
           {plans.map((plan) => (
@@ -280,7 +275,6 @@ export default function ConfirmedPlans() {
         <ConfirmedPlanModal plan={selectedPlan} onClose={() => setSelectedPlan(null)} />
       )}
 
-      {/* Delete Confirmation */}
       {planToDelete && (
         <div
           className="fixed inset-0 bg-white-300 bg-opacity-40 backdrop-blur-sm flex justify-center items-center z-50"

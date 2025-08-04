@@ -2,9 +2,7 @@ export default function ConfirmedPlanModal({ plan, onClose }) {
     const fullPlan = plan.full_plan;
 
     return (
-        <div
-            className="fixed inset-0 bg-white-300 bg-opacity-40 backdrop-blur-sm flex justify-center items-center z-50"
-        >
+        <div className="fixed inset-0 bg-white-300 bg-opacity-40 backdrop-blur-sm flex justify-center items-center z-50">
             <div
                 className="bg-white p-6 rounded-2xl shadow-2xl border border-gray-200 max-w-4xl w-full max-h-[80vh] overflow-y-auto relative"
                 onClick={(e) => e.stopPropagation()}
@@ -47,7 +45,7 @@ export default function ConfirmedPlanModal({ plan, onClose }) {
                                     className="border border-gray-200 rounded-lg p-4 shadow-sm"
                                 >
                                     <h5 className="font-semibold text-md mb-1">
-                                        {item.Location} | {item.Package_ID} ({item.Package_Type})
+                                        Sub Plan {String(idx + 1).padStart(2, "0")} | {item.Package_ID} ({item.Package_Type})
                                     </h5>
                                     <p><strong>Days:</strong> {item.Days}</p>
                                     <p><strong>Accommodation:</strong> {item.Accommodation}</p>
@@ -81,6 +79,5 @@ export default function ConfirmedPlanModal({ plan, onClose }) {
         </div>
     );
 }
-
 
 

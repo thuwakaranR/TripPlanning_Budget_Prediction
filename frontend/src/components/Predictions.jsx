@@ -47,7 +47,6 @@ export default function Predictions({ data, onCloseAll, onPlanConfirmed }) {
     }
   };
 
-  // Close predictions panel
   const handleClosePredictions = () => {
     setShow(false);
     setShowThankYou(true);
@@ -57,7 +56,6 @@ export default function Predictions({ data, onCloseAll, onPlanConfirmed }) {
     }
   };
 
-  // Confirm selected plan
   const handleConfirm = async () => {
     if (selectedIndex === null) return;
     setLoadingConfirm(true);
@@ -100,7 +98,6 @@ export default function Predictions({ data, onCloseAll, onPlanConfirmed }) {
       if (!chatBotManuallyClosed) setShowChatBot(true);
       setShow(false);
 
-      // Notify about plan confirmation
       if (typeof onPlanConfirmed === "function") {
         onPlanConfirmed();
       }
@@ -164,7 +161,7 @@ export default function Predictions({ data, onCloseAll, onPlanConfirmed }) {
           />
         )}
 
-        {/* Prediction cards and controls */}
+        {/* Prediction cards */}
         {show && !showThankYou && (
           <>
             {!isIntro && (
@@ -180,7 +177,6 @@ export default function Predictions({ data, onCloseAll, onPlanConfirmed }) {
             {/* Intro Card */}
             {isIntro && <IntroCard onStart={() => goto(0)} />}
 
-            {/* Plan cards navigation */}
             {!isIntro && (
               <>
                 {/* Previous plan preview */}
@@ -359,7 +355,7 @@ function PlanCard({ option, planNumber, isPeek = false, isSelected = false, onSe
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-              <h3 className="text-lg font-semibold text-blue-700">{pkg.Location}</h3>
+              <h3 className="text-lg font-semibold text-blue-700">{`Sub Plan ${String(idx + 1).padStart(2, "0")}`}</h3>
               <div className="text-sm text-gray-600">
                 {pkg.Days} days •{" "}
                 <span className="text-yellow-600 font-semibold">{pkg.Avg_Rating}⭐</span> •{" "}
@@ -421,3 +417,4 @@ function PlanCard({ option, planNumber, isPeek = false, isSelected = false, onSe
     </div>
   );
 }
+
