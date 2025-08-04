@@ -153,27 +153,6 @@ export default function Home() {
           onClose={handleCloseChatBot}
         />
       )}
-
-      <footer className="bg-white border-t border-gray-200 mt-12 text-sm sm:text-base">
-        <div className="max-w-6xl mx-auto px-6 py-8 sm:py-10 grid grid-cols-1 sm:grid-cols-2 gap-6 items-center text-gray-600">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">TravelMate</h3>
-            <p className="text-gray-500 leading-relaxed">
-              Empowering smarter journeys by predicting and optimizing your travel budgets with ease.
-              Travel wisely, explore freely.
-            </p>
-          </div>
-          <div className="flex flex-col sm:items-end space-y-2">
-            <p>Crafted with precision for global travelers</p>
-            <p>&copy; {new Date().getFullYear()} TravelMate. All rights reserved.</p>
-            <div className="flex gap-4 mt-2">
-              <a href="#" className="hover:text-indigo-600 transition-colors duration-200" onClick={e => e.preventDefault()}>Privacy</a>
-              <a href="#" className="hover:text-indigo-600 transition-colors duration-200" onClick={e => e.preventDefault()}>Terms</a>
-              <a href="#" className="hover:text-indigo-600 transition-colors duration-200" onClick={e => e.preventDefault()}>Support</a>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
