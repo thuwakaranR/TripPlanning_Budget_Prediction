@@ -10,4 +10,7 @@ export const getHealth = () => api.get('/');
 
 export const postPrediction = (tripData) => api.post('/predict', tripData);
 
+export const getConfirmedPlans = () => api.get('/confirmed-plans');
+
 export default api;
+

@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import BudgetForm from '../components/BudgetForm';
 import Predictions from '../components/Predictions';
 import ChatBot from '../components/ChatBot';
-import { postPrediction } from '../api/api';
+import { postPrediction, getConfirmedPlans } from '../api/api';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../App.css';
 
 export default function Home() {
+  const navigate = useNavigate();
+
   const [predictions, setPredictions] = useState(() => {
     const saved = localStorage.getItem("predictions");
     return saved ? JSON.parse(saved) : null;
@@ -15,8 +18,23 @@ export default function Home() {
 
   const [loading, setLoading] = useState(false);
   const [chatVisible, setChatVisible] = useState(false);
+  const [hasConfirmedPlans, setHasConfirmedPlans] = useState(false);
+  const [chatManuallyClosed, setChatManuallyClosed] = useState(() => {
+    return localStorage.getItem("hideChatBot") === "true";
+  });
 
-  const chatManuallyClosed = localStorage.getItem("hideChatBot") === "true";
+  useEffect(() => {
+    async function fetchConfirmedPlans() {
+      try {
+        const response = await getConfirmedPlans();
+        const plans = response?.data?.confirmed_plans || [];
+        setHasConfirmedPlans(plans.length > 0);
+      } catch (err) {
+        console.error("Error fetching confirmed plans:", err);
+      }
+    }
+    fetchConfirmedPlans();
+  }, []);
 
   useEffect(() => {
     if (predictions) {
@@ -26,6 +44,7 @@ export default function Home() {
     }
   }, [predictions]);
 
+  // Submit form
   const handleSubmit = async (formData) => {
     setLoading(true);
     setPredictions(null);
@@ -33,7 +52,7 @@ export default function Home() {
 
     try {
       const response = await postPrediction(formData);
-      if (response.data.error) {
+      if (response.data?.error) {
         toast.error(response.data.error);
       } else {
         setPredictions(response.data.combinations);
@@ -49,7 +68,19 @@ export default function Home() {
 
   const handleCloseChatBot = () => {
     setChatVisible(false);
+    setChatManuallyClosed(true);
     localStorage.setItem("hideChatBot", "true");
+  };
+
+  const handlePlanConfirmed = async () => {
+    try {
+      const response = await getConfirmedPlans();
+      const plans = response?.data?.confirmed_plans || [];
+      setHasConfirmedPlans(plans.length > 0);
+    } catch (err) {
+      console.error("Error fetching confirmed plans after confirmation:", err);
+      setHasConfirmedPlans(true);
+    }
   };
 
   const PredictionsWrapper = ({ data }) => {
@@ -67,7 +98,11 @@ export default function Home() {
 
     return (
       <div className="bg-white rounded-3xl shadow-xl p-10 sm:p-14 animate-fadeIn">
-        <Predictions data={data} onCloseAll={handleClosePredictions} />
+        <Predictions
+          data={data}
+          onCloseAll={handleClosePredictions}
+          onPlanConfirmed={handlePlanConfirmed}
+        />
       </div>
     );
   };
@@ -95,12 +130,23 @@ export default function Home() {
           {predictions && predictions.length > 0 && (
             <PredictionsWrapper data={predictions} />
           )}
+
+          {hasConfirmedPlans && (
+            <div className="text-center mt-12">
+              <button
+                onClick={() => navigate("/confirmed-plans")}
+                className="px-6 py-3 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition"
+              >
+                View Confirmed Plans
+              </button>
+            </div>
+          )}
         </div>
 
         <ToastContainer position="bottom-right" autoClose={1000} hideProgressBar />
+
       </main>
 
-      {/* Global floating chatbot */}
       {chatVisible && (
         <ChatBot
           showChatBot={chatVisible}
@@ -121,9 +167,9 @@ export default function Home() {
             <p>Crafted with precision for global travelers</p>
             <p>&copy; {new Date().getFullYear()} TravelMate. All rights reserved.</p>
             <div className="flex gap-4 mt-2">
-              <a href="#" className="hover:text-indigo-600 transition-colors duration-200">Privacy</a>
-              <a href="#" className="hover:text-indigo-600 transition-colors duration-200">Terms</a>
-              <a href="#" className="hover:text-indigo-600 transition-colors duration-200">Support</a>
+              <a href="#" className="hover:text-indigo-600 transition-colors duration-200" onClick={e => e.preventDefault()}>Privacy</a>
+              <a href="#" className="hover:text-indigo-600 transition-colors duration-200" onClick={e => e.preventDefault()}>Terms</a>
+              <a href="#" className="hover:text-indigo-600 transition-colors duration-200" onClick={e => e.preventDefault()}>Support</a>
             </div>
           </div>
         </div>
@@ -131,6 +177,10 @@ export default function Home() {
     </div>
   );
 }
+
+
+
+
 
 
 

@@ -1,32 +1,32 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from datetime import datetime
+import traceback
+import os
+from bson import ObjectId
+from dotenv import load_dotenv
+import cohere
+
 from app.models import TripRequest, ConfirmPlanRequest
 from app.utils import predict_budget_multiple_options, load_dataset
 from app.database import predictions_collection, confirmed_plans_collection
-from datetime import datetime
-from dotenv import load_dotenv
-import traceback
-import os
-import cohere
 
 load_dotenv()
 
-# Initialize Cohere client
+# Cohere client
 cohere_api_key = os.getenv("COHERE_API_KEY")
 if not cohere_api_key:
     raise RuntimeError("COHERE_API_KEY not found in .env")
 
 co = cohere.Client(cohere_api_key)
 
-# Initialize FastAPI app
 app = FastAPI(
     title="Trip Budget Prediction API",
     description="API to predict and confirm trip budget plans with chatbot support (Cohere)",
     version="1.2.0"
 )
 
-# CORS setup
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  
@@ -35,13 +35,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load dataset once
 df = load_dataset()
 
 @app.get("/", summary="Health check")
 async def root():
     return {"message": "Trip Budget Prediction API is up and running with Cohere chatbot!"}
 
+# Predict trip plan
 @app.post("/predict", summary="Predict trip budget options")
 async def predict_trip(req: TripRequest):
     try:
@@ -72,6 +72,8 @@ async def predict_trip(req: TripRequest):
         print("ERROR in /predict:", traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
+
+# Confirm selected trip plan
 @app.post("/confirm", summary="Confirm a selected trip plan")
 async def confirm_plan(req: ConfirmPlanRequest):
     try:
@@ -94,7 +96,42 @@ async def confirm_plan(req: ConfirmPlanRequest):
         print("ERROR in /confirm:", traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Failed to confirm plan: {str(e)}")
 
-# ChatBot Models
+
+# Get all confirmed plans
+@app.get("/confirmed-plans", summary="Get all confirmed plans")
+async def get_confirmed_plans(user_id: str = None):
+    try:
+        query = {}
+        if user_id:
+            query["user_id"] = user_id
+        
+        plans = list(confirmed_plans_collection.find(query))
+
+        for p in plans:
+            p["_id"] = str(p["_id"])
+            if "confirmed_at" in p and hasattr(p["confirmed_at"], "isoformat"):
+                p["confirmed_at"] = p["confirmed_at"].isoformat()
+
+        return {"confirmed_plans": plans}
+
+    except Exception as e:
+        print("ERROR in /confirmed-plans:", traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Failed to fetch confirmed plans: {str(e)}")
+
+# Delete a confirmed plan by ID
+@app.delete("/confirmed-plans/{plan_id}", summary="Delete a confirmed plan by ID")
+async def delete_confirmed_plan(plan_id: str):
+    try:
+        result = confirmed_plans_collection.delete_one({"_id": ObjectId(plan_id)})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Plan not found")
+        return {"message": "Plan deleted successfully"}
+
+    except Exception as e:
+        print("ERROR in DELETE /confirmed-plans:", traceback.format_exc())
+        raise HTTPException(status_code=500, detail="Failed to delete plan")
+
+# ChatBot using Cohere
 class ChatRequest(BaseModel):
     message: str
 
@@ -115,7 +152,9 @@ async def chatbot_endpoint(chat_request: ChatRequest):
         return ChatResponse(reply=response.text.strip())
 
     except Exception as e:
-        print("Cohere Error:", e)
+        print("Cohere Error:", traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Chatbot error: {str(e)}")
+
+
 
 

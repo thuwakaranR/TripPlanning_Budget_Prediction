@@ -3,7 +3,7 @@ import { IoClose } from "react-icons/io5";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import ChatBot from "./ChatBot";
 
-export default function Predictions({ data, onCloseAll }) {
+export default function Predictions({ data, onCloseAll, onPlanConfirmed }) {
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [show, setShow] = useState(true);
   const [showThankYou, setShowThankYou] = useState(false);
@@ -34,7 +34,6 @@ export default function Predictions({ data, onCloseAll }) {
   const prevIndex = currentIndex - 1;
   const nextIndex = currentIndex + 1;
 
-  // Navigate to a specific plan
   const goto = (index) => {
     if (index >= -1 && index < data.length) {
       setCurrentIndex(index);
@@ -48,17 +47,17 @@ export default function Predictions({ data, onCloseAll }) {
     }
   };
 
-  // Close predictions WITHOUT confirming
+  // Close predictions panel
   const handleClosePredictions = () => {
-    setShow(false);               
-    setShowThankYou(true);       
-    setConfirmedPlanInfo(null);   
+    setShow(false);
+    setShowThankYou(true);
+    setConfirmedPlanInfo(null);
     if (!chatBotManuallyClosed) {
-      setShowChatBot(true);    
+      setShowChatBot(true);
     }
   };
 
-  // Confirm the selected plan by calling backend API
+  // Confirm selected plan
   const handleConfirm = async () => {
     if (selectedIndex === null) return;
     setLoadingConfirm(true);
@@ -100,6 +99,11 @@ export default function Predictions({ data, onCloseAll }) {
       setShowThankYou(true);
       if (!chatBotManuallyClosed) setShowChatBot(true);
       setShow(false);
+
+      // Notify about plan confirmation
+      if (typeof onPlanConfirmed === "function") {
+        onPlanConfirmed();
+      }
     } catch (err) {
       setErrorConfirm(err.message || "Network error");
     } finally {
@@ -122,14 +126,14 @@ export default function Predictions({ data, onCloseAll }) {
     }, 0);
   };
 
-  // Close chatbot manually
+  // Close chatbot
   const handleCloseChatBot = () => {
     setShowChatBot(false);
     setChatBotManuallyClosed(true);
     localStorage.setItem("hideChatBot", "true");
   };
 
-  // Restart entire flow
+  // Restart flow
   const handleRestart = () => {
     setCurrentIndex(-1);
     setShowThankYou(false);
@@ -145,13 +149,13 @@ export default function Predictions({ data, onCloseAll }) {
 
   return (
     <>
-      {/* Floating ChatBot */}
       {showChatBot && (
         <ChatBot showChatBot={showChatBot} onClose={handleCloseChatBot} />
       )}
 
-      {/* Main content */}
+      {/* Main container */}
       <div className="relative flex flex-col items-center w-full max-w-6xl mx-auto py-6">
+        {/* Thank You Card */}
         {showThankYou && (
           <ThankYouCard
             onClose={handleCloseThankYou}
@@ -160,6 +164,7 @@ export default function Predictions({ data, onCloseAll }) {
           />
         )}
 
+        {/* Prediction cards and controls */}
         {show && !showThankYou && (
           <>
             {!isIntro && (
@@ -172,16 +177,24 @@ export default function Predictions({ data, onCloseAll }) {
               </button>
             )}
 
+            {/* Intro Card */}
             {isIntro && <IntroCard onStart={() => goto(0)} />}
 
+            {/* Plan cards navigation */}
             {!isIntro && (
               <>
+                {/* Previous plan preview */}
                 {prevIndex >= 0 && (
                   <div className="absolute left-8 transform -translate-x-full scale-90 opacity-50 w-1/3 transition-all duration-300">
-                    <PlanCard option={data[prevIndex]} planNumber={prevIndex + 1} isPeek />
+                    <PlanCard
+                      option={data[prevIndex]}
+                      planNumber={prevIndex + 1}
+                      isPeek
+                    />
                   </div>
                 )}
 
+                {/* Current plan card */}
                 <div className="z-20 w-2/3 transition-all duration-300">
                   <PlanCard
                     option={data[currentIndex]}
@@ -191,18 +204,24 @@ export default function Predictions({ data, onCloseAll }) {
                   />
                 </div>
 
+                {/* Next plan preview */}
                 {nextIndex < data.length && (
                   <div className="absolute right-8 transform translate-x-full scale-90 opacity-50 w-1/3 transition-all duration-300">
-                    <PlanCard option={data[nextIndex]} planNumber={nextIndex + 1} isPeek />
+                    <PlanCard
+                      option={data[nextIndex]}
+                      planNumber={nextIndex + 1}
+                      isPeek
+                    />
                   </div>
                 )}
 
+                {/* Navigation buttons */}
                 <button
                   onClick={() => goto(prevIndex)}
                   disabled={prevIndex < 0}
                   className={`absolute left-0 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full shadow-md ${prevIndex < 0
-                      ? "bg-gray-300 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700 text-white"
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700 text-white"
                     }`}
                   aria-label="Previous plan"
                 >
@@ -213,14 +232,15 @@ export default function Predictions({ data, onCloseAll }) {
                   onClick={() => goto(nextIndex)}
                   disabled={isLastPlan}
                   className={`absolute right-0 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full shadow-md ${isLastPlan
-                      ? "bg-gray-300 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700 text-white"
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700 text-white"
                     }`}
                   aria-label="Next plan"
                 >
                   <FaChevronRight size={20} />
                 </button>
 
+                {/* Confirm/Cancel buttons when plan selected */}
                 {selectedIndex !== null && (
                   <div className="mt-6 flex gap-4 justify-center z-40">
                     <button
@@ -401,13 +421,3 @@ function PlanCard({ option, planNumber, isPeek = false, isSelected = false, onSe
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
